@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -143,15 +144,28 @@ export function PostEditor({ postId }: { postId?: string }) {
       </div>
 
       <div>
-        <div className="mb-2 flex gap-1 border-b">
-          <button onClick={() => setTab("write")} className={`px-4 py-2 text-sm ${tab === "write" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>작성</button>
-          <button onClick={() => setTab("preview")} className={`px-4 py-2 text-sm ${tab === "preview" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>미리보기</button>
+        <div className="mb-2 flex flex-wrap items-center gap-1 border-b">
+          <button type="button" onClick={() => setTab("write")} className={`px-4 py-2 text-sm ${tab === "write" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>작성</button>
+          <button type="button" onClick={() => setTab("preview")} className={`px-4 py-2 text-sm ${tab === "preview" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>미리보기</button>
+          <div className="ml-auto flex flex-wrap items-center gap-2 pb-2">
+            <label className="cursor-pointer rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+              {uploading ? "업로드 중..." : "📷 이미지"}
+              <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+            </label>
+            <label className="cursor-pointer rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+              {uploading ? "업로드 중..." : "🎬 동영상"}
+              <input type="file" accept="video/*" className="hidden" disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+            </label>
+            <button type="button" onClick={handleYoutube} className="rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">▶ YouTube</button>
+          </div>
         </div>
         {tab === "write" ? (
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={20} className="font-mono text-sm" placeholder="마크다운으로 작성하세요..." />
+          <Textarea id="md-content" value={content} onChange={(e) => setContent(e.target.value)} rows={20} className="font-mono text-sm" placeholder="마크다운으로 작성하세요. 이미지·동영상은 위 버튼으로 첨부하세요." />
         ) : (
           <div className="prose-blog min-h-[400px] rounded-md border bg-background p-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || "*미리보기 내용이 여기에 표시됩니다*"}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{content || "*미리보기 내용이 여기에 표시됩니다*"}</ReactMarkdown>
           </div>
         )}
       </div>
