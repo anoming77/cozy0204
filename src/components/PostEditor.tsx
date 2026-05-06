@@ -21,7 +21,46 @@ export function PostEditor({ postId }: { postId?: string }) {
   const [thumbnail, setThumbnail] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
+
+  const insertAtCursor = (text: string) => {
+    const ta = document.getElementById("md-content") as HTMLTextAreaElement | null;
+    if (!ta) { setContent((c) => c + "\n" + text + "\n"); return; }
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const next = content.slice(0, start) + text + content.slice(end);
+    setContent(next);
+    setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + text.length; }, 0);
+  };
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "bin";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("post-media").upload(path, file, {
+      contentType: file.type, upsert: false,
+    });
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("post-media").getPublicUrl(path);
+    const url = data.publicUrl;
+    if (file.type.startsWith("video/")) {
+      insertAtCursor(`\n<video src="${url}" controls style="max-width:100%"></video>\n`);
+    } else {
+      insertAtCursor(`\n![](${url})\n`);
+    }
+    toast.success("업로드되었습니다");
+  };
+
+  const handleYoutube = () => {
+    const url = prompt("YouTube URL을 입력하세요");
+    if (!url) return;
+    const m = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+    const id = m?.[1];
+    if (!id) return toast.error("YouTube URL을 인식할 수 없습니다");
+    insertAtCursor(`\n<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen style="max-width:100%;aspect-ratio:16/9;width:100%;height:auto"></iframe>\n`);
+  };
 
   useEffect(() => {
     supabase.from("categories").select("id, name").order("sort_order").then(({ data }) => {
