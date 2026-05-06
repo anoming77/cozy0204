@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,46 @@ export function PostEditor({ postId }: { postId?: string }) {
   const [thumbnail, setThumbnail] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
+
+  const insertAtCursor = (text: string) => {
+    const ta = document.getElementById("md-content") as HTMLTextAreaElement | null;
+    if (!ta) { setContent((c) => c + "\n" + text + "\n"); return; }
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const next = content.slice(0, start) + text + content.slice(end);
+    setContent(next);
+    setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + text.length; }, 0);
+  };
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "bin";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("post-media").upload(path, file, {
+      contentType: file.type, upsert: false,
+    });
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("post-media").getPublicUrl(path);
+    const url = data.publicUrl;
+    if (file.type.startsWith("video/")) {
+      insertAtCursor(`\n<video src="${url}" controls style="max-width:100%"></video>\n`);
+    } else {
+      insertAtCursor(`\n![](${url})\n`);
+    }
+    toast.success("업로드되었습니다");
+  };
+
+  const handleYoutube = () => {
+    const url = prompt("YouTube URL을 입력하세요");
+    if (!url) return;
+    const m = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+    const id = m?.[1];
+    if (!id) return toast.error("YouTube URL을 인식할 수 없습니다");
+    insertAtCursor(`\n<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen style="max-width:100%;aspect-ratio:16/9;width:100%;height:auto"></iframe>\n`);
+  };
 
   useEffect(() => {
     supabase.from("categories").select("id, name").order("sort_order").then(({ data }) => {
@@ -104,15 +144,28 @@ export function PostEditor({ postId }: { postId?: string }) {
       </div>
 
       <div>
-        <div className="mb-2 flex gap-1 border-b">
-          <button onClick={() => setTab("write")} className={`px-4 py-2 text-sm ${tab === "write" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>작성</button>
-          <button onClick={() => setTab("preview")} className={`px-4 py-2 text-sm ${tab === "preview" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>미리보기</button>
+        <div className="mb-2 flex flex-wrap items-center gap-1 border-b">
+          <button type="button" onClick={() => setTab("write")} className={`px-4 py-2 text-sm ${tab === "write" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>작성</button>
+          <button type="button" onClick={() => setTab("preview")} className={`px-4 py-2 text-sm ${tab === "preview" ? "border-b-2 border-primary font-semibold" : "text-muted-foreground"}`}>미리보기</button>
+          <div className="ml-auto flex flex-wrap items-center gap-2 pb-2">
+            <label className="cursor-pointer rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+              {uploading ? "업로드 중..." : "📷 이미지"}
+              <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+            </label>
+            <label className="cursor-pointer rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">
+              {uploading ? "업로드 중..." : "🎬 동영상"}
+              <input type="file" accept="video/*" className="hidden" disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ""; }} />
+            </label>
+            <button type="button" onClick={handleYoutube} className="rounded-md border bg-background px-3 py-1.5 text-xs hover:bg-muted">▶ YouTube</button>
+          </div>
         </div>
         {tab === "write" ? (
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={20} className="font-mono text-sm" placeholder="마크다운으로 작성하세요..." />
+          <Textarea id="md-content" value={content} onChange={(e) => setContent(e.target.value)} rows={20} className="font-mono text-sm" placeholder="마크다운으로 작성하세요. 이미지·동영상은 위 버튼으로 첨부하세요." />
         ) : (
           <div className="prose-blog min-h-[400px] rounded-md border bg-background p-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || "*미리보기 내용이 여기에 표시됩니다*"}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{content || "*미리보기 내용이 여기에 표시됩니다*"}</ReactMarkdown>
           </div>
         )}
       </div>
