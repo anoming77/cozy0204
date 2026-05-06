@@ -9,38 +9,134 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PostSlugRouteImport } from './routes/post.$slug'
+import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as AdminEditIdRouteImport } from './routes/admin.edit.$id'
 
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PostSlugRoute = PostSlugRouteImport.update({
+  id: '/post/$slug',
+  path: '/post/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorySlugRoute = CategorySlugRouteImport.update({
+  id: '/category/$slug',
+  path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNewRoute = AdminNewRouteImport.update({
+  id: '/admin/new',
+  path: '/admin/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEditIdRoute = AdminEditIdRouteImport.update({
+  id: '/admin/edit/$id',
+  path: '/admin/edit/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/admin/new': typeof AdminNewRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/post/$slug': typeof PostSlugRoute
+  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/admin/new': typeof AdminNewRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/post/$slug': typeof PostSlugRoute
+  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
+  '/admin/new': typeof AdminNewRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/post/$slug': typeof PostSlugRoute
+  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/search'
+    | '/admin/new'
+    | '/category/$slug'
+    | '/post/$slug'
+    | '/admin/edit/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/search'
+    | '/admin/new'
+    | '/category/$slug'
+    | '/post/$slug'
+    | '/admin/edit/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/search'
+    | '/admin/new'
+    | '/category/$slug'
+    | '/post/$slug'
+    | '/admin/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  SearchRoute: typeof SearchRoute
+  AdminNewRoute: typeof AdminNewRoute
+  CategorySlugRoute: typeof CategorySlugRoute
+  PostSlugRoute: typeof PostSlugRoute
+  AdminEditIdRoute: typeof AdminEditIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +144,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/post/$slug': {
+      id: '/post/$slug'
+      path: '/post/$slug'
+      fullPath: '/post/$slug'
+      preLoaderRoute: typeof PostSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/category/$slug': {
+      id: '/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/new': {
+      id: '/admin/new'
+      path: '/admin/new'
+      fullPath: '/admin/new'
+      preLoaderRoute: typeof AdminNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/edit/$id': {
+      id: '/admin/edit/$id'
+      path: '/admin/edit/$id'
+      fullPath: '/admin/edit/$id'
+      preLoaderRoute: typeof AdminEditIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  SearchRoute: SearchRoute,
+  AdminNewRoute: AdminNewRoute,
+  CategorySlugRoute: CategorySlugRoute,
+  PostSlugRoute: PostSlugRoute,
+  AdminEditIdRoute: AdminEditIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
