@@ -41,7 +41,8 @@ function SearchPage() {
       setLoading(true);
       let q1 = supabase
         .from("posts")
-        .select("id, title, slug, excerpt, thumbnail_url, created_at, view_count, categories(name, slug)")
+        .select("id, title, slug, excerpt, content, thumbnail_url, created_at, view_count, status, categories(name, slug)")
+        .eq("status", "published")
         .order("created_at", { ascending: false });
 
       if (params.q) q1 = q1.or(`title.ilike.%${params.q}%,content.ilike.%${params.q}%`);

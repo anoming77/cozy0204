@@ -30,7 +30,7 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-8 shadow-sm">
         <div className="text-center">
-          <Link to="/" className="text-lg font-bold text-primary">📚 학습 아카이브</Link>
+          <Link to="/" className="text-lg font-bold text-primary">Hello world</Link>
           <h1 className="mt-2 text-xl font-semibold">관리자 로그인</h1>
         </div>
         <div className="space-y-2">
