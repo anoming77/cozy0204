@@ -206,26 +206,25 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
   const [replyNick, setReplyNick] = useState("");
   const [delId, setDelId] = useState<string | null>(null);
 
-  const baseInsert = (extra: Record<string, unknown>) => ({
-    post_id: postId,
-    user_id: isAdmin ? userId : null,
-    author_role: isAdmin ? "admin" : null,
-    ...extra,
-  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim() || !content.trim()) return;
-    const { error } = await supabase.from("comments").insert(baseInsert({ nickname: nickname.trim(), content: content.trim() }));
+    const { error } = await supabase.from("comments").insert({
+      post_id: postId, nickname: nickname.trim(), content: content.trim(),
+      user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
+    });
     if (error) return toast.error(error.message);
     setContent(""); reload();
   };
 
   const submitReply = async (parentId: string) => {
     if (!replyNick.trim() || !replyText.trim()) return;
-    const { error } = await supabase.from("comments").insert(baseInsert({
-      parent_id: parentId, nickname: replyNick.trim(), content: replyText.trim(),
-    }));
+    const { error } = await supabase.from("comments").insert({
+      post_id: postId, parent_id: parentId,
+      nickname: replyNick.trim(), content: replyText.trim(),
+      user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
+    });
     if (error) return toast.error(error.message);
     setReplyText(""); setReplyNick(""); setReplyTo(null);
     reload();
