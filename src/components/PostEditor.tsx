@@ -59,7 +59,7 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
     const finalSlug = slug.trim() || autoSlug(title);
     const { data: { user } } = await supabase.auth.getUser();
     // map 'public' -> stored value 'published' for backwards compat
-    const dbStatus = nextStatus === "public" ? "published" : nextStatus;
+    const dbStatus = (nextStatus === "public" ? "published" : nextStatus) as "draft" | "private" | "published";
     const payload = {
       title: title.trim(), slug: finalSlug,
       excerpt: excerpt.trim() || null, content,
