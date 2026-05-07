@@ -28,11 +28,11 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-3">
+      <div className="mx-auto flex h-16 sm:h-20 max-w-6xl items-center gap-2 px-4 sm:gap-3">
         <button className="lg:hidden" onClick={onMenuClick} aria-label="메뉴">
           <Menu className="h-5 w-5" />
         </button>
-        <Link to="/" className="text-lg font-bold text-primary whitespace-nowrap">
+        <Link to="/" className="text-2xl sm:text-[2.5rem] font-bold tracking-tight text-primary whitespace-nowrap leading-none">
           Hello world
         </Link>
         <form onSubmit={onSearch} className="relative mx-auto hidden max-w-md flex-1 md:block">

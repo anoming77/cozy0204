@@ -51,28 +51,34 @@ export type Database = {
       }
       comments: {
         Row: {
+          author_role: string | null
           content: string
           created_at: string
           id: string
           nickname: string
           parent_id: string | null
           post_id: string
+          user_id: string | null
         }
         Insert: {
+          author_role?: string | null
           content: string
           created_at?: string
           id?: string
           nickname: string
           parent_id?: string | null
           post_id: string
+          user_id?: string | null
         }
         Update: {
+          author_role?: string | null
           content?: string
           created_at?: string
           id?: string
           nickname?: string
           parent_id?: string | null
           post_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -134,6 +140,7 @@ export type Database = {
           created_at: string
           excerpt: string | null
           id: string
+          is_featured: boolean
           published: boolean
           slug: string
           status: Database["public"]["Enums"]["post_status"]
@@ -149,6 +156,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           published?: boolean
           slug: string
           status?: Database["public"]["Enums"]["post_status"]
@@ -164,6 +172,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           published?: boolean
           slug?: string
           status?: Database["public"]["Enums"]["post_status"]
@@ -214,6 +223,27 @@ export type Database = {
           },
         ]
       }
+      site_pages: {
+        Row: {
+          content: string
+          id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          id?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -251,7 +281,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
-      post_status: "draft" | "published"
+      post_status: "draft" | "published" | "private"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -380,7 +410,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
-      post_status: ["draft", "published"],
+      post_status: ["draft", "published", "private"],
     },
   },
 } as const
