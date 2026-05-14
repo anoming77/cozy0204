@@ -25,6 +25,7 @@ type Post = {
   thumbnail_url: string | null;
   status: string;
   is_featured: boolean;
+  comments_disabled: boolean;
   categories: { name: string; slug: string } | null;
 };
 
@@ -62,7 +63,7 @@ function PostDetail() {
     (async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, title, slug, content, created_at, view_count, thumbnail_url, status, is_featured, categories(name, slug)")
+        .select("id, title, slug, content, created_at, view_count, thumbnail_url, status, is_featured, comments_disabled, categories(name, slug)")
         .eq("slug", slug)
         .maybeSingle();
       if (error || !data) { setNotFound(true); return; }
@@ -185,7 +186,7 @@ function PostDetail() {
         </div>
       </article>
 
-      <CommentSection postId={post.id} comments={comments} reload={() => loadComments(post.id)} isAdmin={isAdmin} userId={user?.id ?? null} />
+      <CommentSection postId={post.id} comments={comments} reload={() => loadComments(post.id)} isAdmin={isAdmin} userId={user?.id ?? null} disabled={post.comments_disabled} />
 
       <ConfirmDialog open={confirmDel} onOpenChange={setConfirmDel}
         title="정말 삭제하시겠습니까?" description="되돌릴 수 없습니다." onConfirm={deletePost} />
@@ -196,8 +197,8 @@ function PostDetail() {
   );
 }
 
-function CommentSection({ postId, comments, reload, isAdmin, userId }: {
-  postId: string; comments: Comment[]; reload: () => void; isAdmin: boolean; userId: string | null;
+function CommentSection({ postId, comments, reload, isAdmin, userId, disabled }: {
+  postId: string; comments: Comment[]; reload: () => void; isAdmin: boolean; userId: string | null; disabled: boolean;
 }) {
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
@@ -206,28 +207,38 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
   const [replyNick, setReplyNick] = useState("");
   const [delId, setDelId] = useState<string | null>(null);
 
+  async function postComment(payload: Record<string, unknown>) {
+    const res = await fetch("/api/public/comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error || "등록에 실패했습니다");
+      return false;
+    }
+    return true;
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim() || !content.trim()) return;
-    const { error } = await supabase.from("comments").insert({
+    const ok = await postComment({
       post_id: postId, nickname: nickname.trim(), content: content.trim(),
       user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
     });
-    if (error) return toast.error(error.message);
-    setContent(""); reload();
+    if (ok) { setContent(""); reload(); }
   };
 
   const submitReply = async (parentId: string) => {
     if (!replyNick.trim() || !replyText.trim()) return;
-    const { error } = await supabase.from("comments").insert({
+    const ok = await postComment({
       post_id: postId, parent_id: parentId,
       nickname: replyNick.trim(), content: replyText.trim(),
       user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
     });
-    if (error) return toast.error(error.message);
-    setReplyText(""); setReplyNick(""); setReplyTo(null);
-    reload();
+    if (ok) { setReplyText(""); setReplyNick(""); setReplyTo(null); reload(); }
   };
 
   const del = async () => {
@@ -246,7 +257,7 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
       <ul className="space-y-4">
         {roots.map((c) => (
           <li key={c.id} className="border-b pb-3 last:border-0">
-            <CommentItem c={c} isAdmin={isAdmin} onDelete={(id) => setDelId(id)} onReply={() => setReplyTo(replyTo === c.id ? null : c.id)} />
+            <CommentItem c={c} isAdmin={isAdmin} onDelete={(id) => setDelId(id)} onReply={disabled ? undefined : () => setReplyTo(replyTo === c.id ? null : c.id)} />
             <ul className="mt-3 space-y-3 pl-6 border-l-2">
               {childrenOf(c.id).map((rc) => (
                 <li key={rc.id}>
@@ -254,7 +265,7 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
                 </li>
               ))}
             </ul>
-            {replyTo === c.id && (
+            {!disabled && replyTo === c.id && (
               <div className="mt-3 space-y-2 pl-6">
                 <Input placeholder="닉네임" value={replyNick} onChange={(e) => setReplyNick(e.target.value)} className="max-w-xs" />
                 <Textarea placeholder="답글 내용" value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={2} />
@@ -265,11 +276,18 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
         ))}
       </ul>
 
-      <form onSubmit={submit} className="mt-6 space-y-2 border-t pt-4">
-        <Input placeholder={isAdmin ? "닉네임 (관리자로 표시됩니다)" : "닉네임"} value={nickname} onChange={(e) => setNickname(e.target.value)} className="max-w-xs" required />
-        <Textarea placeholder="댓글을 입력하세요" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} />
-        <Button type="submit">댓글 등록</Button>
-      </form>
+      {disabled ? (
+        <div className="mt-6 rounded-md border border-dashed bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+          이 글은 댓글이 비활성화되어 있습니다.
+        </div>
+      ) : (
+        <form onSubmit={submit} className="mt-6 space-y-2 border-t pt-4">
+          <Input placeholder={isAdmin ? "닉네임 (관리자로 표시됩니다)" : "닉네임"} value={nickname} onChange={(e) => setNickname(e.target.value)} className="max-w-xs" required />
+          <Textarea placeholder="댓글을 입력하세요" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} />
+          <Button type="submit">댓글 등록</Button>
+          <p className="text-xs text-muted-foreground">동일 IP에서는 같은 닉네임만 사용할 수 있습니다.</p>
+        </form>
+      )}
 
       <ConfirmDialog open={!!delId} onOpenChange={(v) => !v && setDelId(null)}
         title="댓글을 삭제하시겠습니까?" description="되돌릴 수 없습니다." onConfirm={del} />

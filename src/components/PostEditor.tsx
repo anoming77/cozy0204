@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { readingTime } from "@/lib/readingTime";
 import { RichEditor } from "./RichEditor";
 import { ThumbnailUpload } from "./ThumbnailUpload";
-import { Lock, Globe, FileText } from "lucide-react";
+import { Lock, Globe, FileText, MessageSquareOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 type Category = { id: string; name: string };
 type Status = "draft" | "private" | "public";
@@ -25,6 +26,7 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
   const [thumbnail, setThumbnail] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<Status>("draft");
+  const [commentsDisabled, setCommentsDisabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [loaded, setLoaded] = useState(!initialPostId);
@@ -43,6 +45,7 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
           setCategoryId(data.category_id ?? "");
           const s = data.status as string;
           setStatus((s === "published" ? "public" : s) as Status);
+          setCommentsDisabled(Boolean((data as { comments_disabled?: boolean }).comments_disabled));
         }
         setLoaded(true);
       });
@@ -66,6 +69,7 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
       thumbnail_url: thumbnail.trim() || null,
       category_id: categoryId || null, author_id: user?.id ?? null,
       status: dbStatus,
+      comments_disabled: commentsDisabled,
     };
     const { data, error } = postId
       ? await supabase.from("posts").update(payload).eq("id", postId).select().single()
@@ -85,7 +89,7 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
     debounceRef.current = setTimeout(() => { persist(status).catch(() => {}); }, 1000);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, slug, excerpt, content, thumbnail, categoryId, loaded]);
+  }, [title, slug, excerpt, content, thumbnail, categoryId, commentsDisabled, loaded]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -155,6 +159,17 @@ export function PostEditor({ postId: initialPostId }: { postId?: string }) {
       <div className="space-y-1.5">
         <Label>본문</Label>
         <RichEditor value={content} onChange={setContent} />
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <MessageSquareOff className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <Label className="text-sm">댓글 차단</Label>
+            <p className="text-xs text-muted-foreground">켜면 이 글에 새 댓글을 달 수 없습니다.</p>
+          </div>
+        </div>
+        <Switch checked={commentsDisabled} onCheckedChange={setCommentsDisabled} />
       </div>
 
       <div className="flex flex-wrap justify-end gap-2">
