@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PostSlugRouteImport } from './routes/post.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as ApiPublicCommentRouteImport } from './routes/api/public/comment'
 import { Route as AdminEditIdRouteImport } from './routes/admin.edit.$id'
 
 const SearchRoute = SearchRouteImport.update({
@@ -53,6 +54,11 @@ const AdminNewRoute = AdminNewRouteImport.update({
   path: '/admin/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCommentRoute = ApiPublicCommentRouteImport.update({
+  id: '/api/public/comment',
+  path: '/api/public/comment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminEditIdRoute = AdminEditIdRouteImport.update({
   id: '/admin/edit/$id',
   path: '/admin/edit/$id',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
+  '/api/public/comment': typeof ApiPublicCommentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
+  '/api/public/comment': typeof ApiPublicCommentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/post/$slug': typeof PostSlugRoute
   '/admin/edit/$id': typeof AdminEditIdRoute
+  '/api/public/comment': typeof ApiPublicCommentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/post/$slug'
     | '/admin/edit/$id'
+    | '/api/public/comment'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/post/$slug'
     | '/admin/edit/$id'
+    | '/api/public/comment'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/post/$slug'
     | '/admin/edit/$id'
+    | '/api/public/comment'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   CategorySlugRoute: typeof CategorySlugRoute
   PostSlugRoute: typeof PostSlugRoute
   AdminEditIdRoute: typeof AdminEditIdRoute
+  ApiPublicCommentRoute: typeof ApiPublicCommentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/comment': {
+      id: '/api/public/comment'
+      path: '/api/public/comment'
+      fullPath: '/api/public/comment'
+      preLoaderRoute: typeof ApiPublicCommentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/edit/$id': {
       id: '/admin/edit/$id'
       path: '/admin/edit/$id'
@@ -204,7 +224,17 @@ const rootRouteChildren: RootRouteChildren = {
   CategorySlugRoute: CategorySlugRoute,
   PostSlugRoute: PostSlugRoute,
   AdminEditIdRoute: AdminEditIdRoute,
+  ApiPublicCommentRoute: ApiPublicCommentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
