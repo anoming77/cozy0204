@@ -25,6 +25,7 @@ type Post = {
   thumbnail_url: string | null;
   status: string;
   is_featured: boolean;
+  comments_disabled: boolean;
   categories: { name: string; slug: string } | null;
 };
 
@@ -62,7 +63,7 @@ function PostDetail() {
     (async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, title, slug, content, created_at, view_count, thumbnail_url, status, is_featured, categories(name, slug)")
+        .select("id, title, slug, content, created_at, view_count, thumbnail_url, status, is_featured, comments_disabled, categories(name, slug)")
         .eq("slug", slug)
         .maybeSingle();
       if (error || !data) { setNotFound(true); return; }
