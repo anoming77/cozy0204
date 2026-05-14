@@ -186,7 +186,7 @@ function PostDetail() {
         </div>
       </article>
 
-      <CommentSection postId={post.id} comments={comments} reload={() => loadComments(post.id)} isAdmin={isAdmin} userId={user?.id ?? null} />
+      <CommentSection postId={post.id} comments={comments} reload={() => loadComments(post.id)} isAdmin={isAdmin} userId={user?.id ?? null} disabled={post.comments_disabled} />
 
       <ConfirmDialog open={confirmDel} onOpenChange={setConfirmDel}
         title="정말 삭제하시겠습니까?" description="되돌릴 수 없습니다." onConfirm={deletePost} />
@@ -197,8 +197,8 @@ function PostDetail() {
   );
 }
 
-function CommentSection({ postId, comments, reload, isAdmin, userId }: {
-  postId: string; comments: Comment[]; reload: () => void; isAdmin: boolean; userId: string | null;
+function CommentSection({ postId, comments, reload, isAdmin, userId, disabled }: {
+  postId: string; comments: Comment[]; reload: () => void; isAdmin: boolean; userId: string | null; disabled: boolean;
 }) {
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
@@ -207,28 +207,38 @@ function CommentSection({ postId, comments, reload, isAdmin, userId }: {
   const [replyNick, setReplyNick] = useState("");
   const [delId, setDelId] = useState<string | null>(null);
 
+  async function postComment(payload: Record<string, unknown>) {
+    const res = await fetch("/api/public/comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error || "등록에 실패했습니다");
+      return false;
+    }
+    return true;
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim() || !content.trim()) return;
-    const { error } = await supabase.from("comments").insert({
+    const ok = await postComment({
       post_id: postId, nickname: nickname.trim(), content: content.trim(),
       user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
     });
-    if (error) return toast.error(error.message);
-    setContent(""); reload();
+    if (ok) { setContent(""); reload(); }
   };
 
   const submitReply = async (parentId: string) => {
     if (!replyNick.trim() || !replyText.trim()) return;
-    const { error } = await supabase.from("comments").insert({
+    const ok = await postComment({
       post_id: postId, parent_id: parentId,
       nickname: replyNick.trim(), content: replyText.trim(),
       user_id: isAdmin ? userId : null, author_role: isAdmin ? "admin" : null,
     });
-    if (error) return toast.error(error.message);
-    setReplyText(""); setReplyNick(""); setReplyTo(null);
-    reload();
+    if (ok) { setReplyText(""); setReplyNick(""); setReplyTo(null); reload(); }
   };
 
   const del = async () => {
