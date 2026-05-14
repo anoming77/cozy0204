@@ -55,6 +55,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          ip_address: string | null
           nickname: string
           parent_id: string | null
           post_id: string
@@ -65,6 +66,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          ip_address?: string | null
           nickname: string
           parent_id?: string | null
           post_id: string
@@ -75,6 +77,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          ip_address?: string | null
           nickname?: string
           parent_id?: string | null
           post_id?: string
@@ -136,6 +139,7 @@ export type Database = {
         Row: {
           author_id: string | null
           category_id: string | null
+          comments_disabled: boolean
           content: string
           created_at: string
           excerpt: string | null
@@ -152,6 +156,7 @@ export type Database = {
         Insert: {
           author_id?: string | null
           category_id?: string | null
+          comments_disabled?: boolean
           content?: string
           created_at?: string
           excerpt?: string | null
@@ -168,6 +173,7 @@ export type Database = {
         Update: {
           author_id?: string | null
           category_id?: string | null
+          comments_disabled?: boolean
           content?: string
           created_at?: string
           excerpt?: string | null
