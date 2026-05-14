@@ -67,6 +67,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             </Button>
           )}
         </div>
+        </div>
       </div>
       {showSearch && (
         <form onSubmit={onSearch} className="border-t bg-background px-4 py-2 md:hidden">
