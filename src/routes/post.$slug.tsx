@@ -257,7 +257,7 @@ function CommentSection({ postId, comments, reload, isAdmin, userId, disabled }:
       <ul className="space-y-4">
         {roots.map((c) => (
           <li key={c.id} className="border-b pb-3 last:border-0">
-            <CommentItem c={c} isAdmin={isAdmin} onDelete={(id) => setDelId(id)} onReply={() => setReplyTo(replyTo === c.id ? null : c.id)} />
+            <CommentItem c={c} isAdmin={isAdmin} onDelete={(id) => setDelId(id)} onReply={disabled ? undefined : () => setReplyTo(replyTo === c.id ? null : c.id)} />
             <ul className="mt-3 space-y-3 pl-6 border-l-2">
               {childrenOf(c.id).map((rc) => (
                 <li key={rc.id}>
@@ -265,7 +265,7 @@ function CommentSection({ postId, comments, reload, isAdmin, userId, disabled }:
                 </li>
               ))}
             </ul>
-            {replyTo === c.id && (
+            {!disabled && replyTo === c.id && (
               <div className="mt-3 space-y-2 pl-6">
                 <Input placeholder="닉네임" value={replyNick} onChange={(e) => setReplyNick(e.target.value)} className="max-w-xs" />
                 <Textarea placeholder="답글 내용" value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={2} />
@@ -276,11 +276,18 @@ function CommentSection({ postId, comments, reload, isAdmin, userId, disabled }:
         ))}
       </ul>
 
-      <form onSubmit={submit} className="mt-6 space-y-2 border-t pt-4">
-        <Input placeholder={isAdmin ? "닉네임 (관리자로 표시됩니다)" : "닉네임"} value={nickname} onChange={(e) => setNickname(e.target.value)} className="max-w-xs" required />
-        <Textarea placeholder="댓글을 입력하세요" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} />
-        <Button type="submit">댓글 등록</Button>
-      </form>
+      {disabled ? (
+        <div className="mt-6 rounded-md border border-dashed bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+          이 글은 댓글이 비활성화되어 있습니다.
+        </div>
+      ) : (
+        <form onSubmit={submit} className="mt-6 space-y-2 border-t pt-4">
+          <Input placeholder={isAdmin ? "닉네임 (관리자로 표시됩니다)" : "닉네임"} value={nickname} onChange={(e) => setNickname(e.target.value)} className="max-w-xs" required />
+          <Textarea placeholder="댓글을 입력하세요" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} />
+          <Button type="submit">댓글 등록</Button>
+          <p className="text-xs text-muted-foreground">동일 IP에서는 같은 닉네임만 사용할 수 있습니다.</p>
+        </form>
+      )}
 
       <ConfirmDialog open={!!delId} onOpenChange={(v) => !v && setDelId(null)}
         title="댓글을 삭제하시겠습니까?" description="되돌릴 수 없습니다." onConfirm={del} />
