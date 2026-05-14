@@ -28,14 +28,17 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 sm:h-20 max-w-6xl items-center gap-2 px-4 sm:gap-3">
-        <button className="lg:hidden" onClick={onMenuClick} aria-label="메뉴">
-          <Menu className="h-5 w-5" />
-        </button>
-        <Link to="/" className="text-2xl sm:text-[2.5rem] font-bold tracking-tight text-primary whitespace-nowrap leading-none">
-          Hello world
-        </Link>
-        <form onSubmit={onSearch} className="relative mx-auto hidden max-w-md flex-1 md:block">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 lg:grid lg:h-16 lg:grid-cols-[240px_1fr] lg:gap-6">
+        <div className="flex items-center gap-2 lg:justify-center">
+          <button className="lg:hidden" onClick={onMenuClick} aria-label="메뉴">
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link to="/" className="text-base font-bold tracking-tight text-primary whitespace-nowrap leading-none md:text-sm">
+            Hello world
+          </Link>
+        </div>
+        <div className="ml-auto flex flex-1 items-center gap-2 lg:ml-0 lg:flex-none">
+        <form onSubmit={onSearch} className="relative hidden max-w-md flex-1 md:block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
