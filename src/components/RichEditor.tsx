@@ -1,8 +1,64 @@
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, Extension } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+
+// Font size mark via TextStyle
+const FontSize = Extension.create({
+  name: "fontSize",
+  addOptions() { return { types: ["textStyle"] }; },
+  addGlobalAttributes() {
+    return [{
+      types: this.options.types,
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.style.fontSize || null,
+          renderHTML: (attrs: { fontSize?: string }) =>
+            attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {},
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setFontSize: (size: string) => ({ chain }: any) =>
+        chain().setMark("textStyle", { fontSize: size }).run(),
+      unsetFontSize: () => ({ chain }: any) =>
+        chain().setMark("textStyle", { fontSize: null }).removeEmptyTextStyle().run(),
+    } as any;
+  },
+});
+
+// Line height on block nodes
+const LineHeight = Extension.create({
+  name: "lineHeight",
+  addOptions() { return { types: ["paragraph", "heading"] }; },
+  addGlobalAttributes() {
+    return [{
+      types: this.options.types,
+      attributes: {
+        lineHeight: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.style.lineHeight || null,
+          renderHTML: (attrs: { lineHeight?: string }) =>
+            attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setLineHeight: (value: string) => ({ commands, state }: any) => {
+        const types = ["paragraph", "heading"];
+        return types.every((t) =>
+          state.schema.nodes[t] ? commands.updateAttributes(t, { lineHeight: value }) : true
+        );
+      },
+    } as any;
+  },
+});
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
