@@ -1,8 +1,64 @@
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, Extension } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+
+// Font size mark via TextStyle
+const FontSize = Extension.create({
+  name: "fontSize",
+  addOptions() { return { types: ["textStyle"] }; },
+  addGlobalAttributes() {
+    return [{
+      types: this.options.types,
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.style.fontSize || null,
+          renderHTML: (attrs: { fontSize?: string }) =>
+            attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {},
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setFontSize: (size: string) => ({ chain }: any) =>
+        chain().setMark("textStyle", { fontSize: size }).run(),
+      unsetFontSize: () => ({ chain }: any) =>
+        chain().setMark("textStyle", { fontSize: null }).removeEmptyTextStyle().run(),
+    } as any;
+  },
+});
+
+// Line height on block nodes
+const LineHeight = Extension.create({
+  name: "lineHeight",
+  addOptions() { return { types: ["paragraph", "heading"] }; },
+  addGlobalAttributes() {
+    return [{
+      types: this.options.types,
+      attributes: {
+        lineHeight: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.style.lineHeight || null,
+          renderHTML: (attrs: { lineHeight?: string }) =>
+            attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setLineHeight: (value: string) => ({ commands, state }: any) => {
+        const types = ["paragraph", "heading"];
+        return types.every((t) =>
+          state.schema.nodes[t] ? commands.updateAttributes(t, { lineHeight: value }) : true
+        );
+      },
+    } as any;
+  },
+});
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -77,6 +133,32 @@ function Toolbar({ editor }: { editor: Editor }) {
         <option value="p">본문</option>
       </select>
 
+      <select onChange={(e) => {
+        const v = e.target.value;
+        if (!v) return;
+        if (v === "reset") (editor.chain().focus() as any).unsetFontSize().run();
+        else (editor.chain().focus() as any).setFontSize(v).run();
+        e.target.value = "";
+      }} className="mr-1 h-8 rounded border bg-background px-2 text-xs" defaultValue="" title="글자 크기 (pt)">
+        <option value="" disabled>pt</option>
+        {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72].map((n) => (
+          <option key={n} value={`${n}pt`}>{n}pt</option>
+        ))}
+        <option value="reset">기본</option>
+      </select>
+
+      <select onChange={(e) => {
+        const v = e.target.value;
+        if (!v) return;
+        (editor.chain().focus() as any).setLineHeight(v).run();
+        e.target.value = "";
+      }} className="mr-1 h-8 rounded border bg-background px-2 text-xs" defaultValue="" title="줄 간격">
+        <option value="" disabled>줄간격</option>
+        {["1", "1.15", "1.5", "1.75", "2", "2.5", "3"].map((n) => (
+          <option key={n} value={n}>{n}</option>
+        ))}
+      </select>
+
       <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="굵게"><Bold className="h-4 w-4" /></ToolbarBtn>
       <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="기울임"><Italic className="h-4 w-4" /></ToolbarBtn>
       <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title="밑줄"><UIcon className="h-4 w-4" /></ToolbarBtn>
@@ -134,6 +216,8 @@ export function RichEditor({ value, onChange }: { value: string; onChange: (html
   const editor = useEditor({
     extensions: [
       StarterKit,
+      FontSize,
+      LineHeight,
       Underline,
       TextStyle,
       Color,
