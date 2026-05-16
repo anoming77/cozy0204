@@ -33,7 +33,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           <button className="lg:hidden" onClick={onMenuClick} aria-label="메뉴">
             <Menu className="h-5 w-5" />
           </button>
-          <Link to="/" className="text-base font-bold tracking-tight text-primary whitespace-nowrap leading-none md:text-sm">
+          <Link to="/" className="text-3xl font-bold tracking-tight text-primary whitespace-nowrap leading-none md:text-2xl">
             Hello world
           </Link>
         </div>
