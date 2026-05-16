@@ -133,6 +133,32 @@ function Toolbar({ editor }: { editor: Editor }) {
         <option value="p">본문</option>
       </select>
 
+      <select onChange={(e) => {
+        const v = e.target.value;
+        if (!v) return;
+        if (v === "reset") (editor.chain().focus() as any).unsetFontSize().run();
+        else (editor.chain().focus() as any).setFontSize(v).run();
+        e.target.value = "";
+      }} className="mr-1 h-8 rounded border bg-background px-2 text-xs" defaultValue="" title="글자 크기 (pt)">
+        <option value="" disabled>pt</option>
+        {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72].map((n) => (
+          <option key={n} value={`${n}pt`}>{n}pt</option>
+        ))}
+        <option value="reset">기본</option>
+      </select>
+
+      <select onChange={(e) => {
+        const v = e.target.value;
+        if (!v) return;
+        (editor.chain().focus() as any).setLineHeight(v).run();
+        e.target.value = "";
+      }} className="mr-1 h-8 rounded border bg-background px-2 text-xs" defaultValue="" title="줄 간격">
+        <option value="" disabled>줄간격</option>
+        {["1", "1.15", "1.5", "1.75", "2", "2.5", "3"].map((n) => (
+          <option key={n} value={n}>{n}</option>
+        ))}
+      </select>
+
       <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="굵게"><Bold className="h-4 w-4" /></ToolbarBtn>
       <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="기울임"><Italic className="h-4 w-4" /></ToolbarBtn>
       <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title="밑줄"><UIcon className="h-4 w-4" /></ToolbarBtn>
