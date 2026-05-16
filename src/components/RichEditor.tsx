@@ -216,6 +216,8 @@ export function RichEditor({ value, onChange }: { value: string; onChange: (html
   const editor = useEditor({
     extensions: [
       StarterKit,
+      FontSize,
+      LineHeight,
       Underline,
       TextStyle,
       Color,
